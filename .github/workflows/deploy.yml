@@ -1,0 +1,43 @@
+# Simple workflow for deploying static content to GitHub Pages
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+      - master # Triggers on push to either main or master branches
+
+# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
+permissions:
+  contents: write
+
+jobs:
+  build-and-deploy:
+    concurrency: ci-${{ github.ref }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          # CRITICAL: We DO NOT set cache: 'npm' here.
+          # This prevents the setup-node action from failing with:
+          # "Dependencies lock file is not found" when package-lock.json is not checked in.
+
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Build Application
+        run: npm run build
+        env:
+          VITE_BASE_URL: '/' # Adjust this if deploying under a subfolder e.g. /my-repo-name/
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: dist # The folder the build script generates (Vite compiles static assets to dist/)
+          branch: gh-pages # The branch the action will push the static files to
+          clean: true # Automatically remove old files from the deployment branch
